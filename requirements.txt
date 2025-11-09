@@ -1,0 +1,8 @@
+customtkinter
+pywin32
+pillow
+reportlab
+sqlite-utils
+sqlite-web
+pandas
+tabulate
