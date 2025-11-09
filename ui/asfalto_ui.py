@@ -5,6 +5,7 @@ from ui.projeto_ui import ProjetoUI
 from utils.path_helper import get_planilha_path
 import os
 
+
 class AsfaltoUI:
     def __init__(self, master, usuario):
         self.master = master
@@ -15,23 +16,29 @@ class AsfaltoUI:
         self.frame.pack(expand=True, fill="both")
 
         # Frame central para botões e label
-        self.center_frame = ctk.CTkFrame(self.frame, width=380, height=320, corner_radius=16)
+        self.center_frame = ctk.CTkFrame(
+            self.frame, width=380, height=320, corner_radius=16)
         self.center_frame.place(relx=0.5, rely=0.5, anchor="center")
         self.center_frame.pack_propagate(False)
 
-        self.label = ctk.CTkLabel(self.center_frame, text="Módulo Asfalto", font=("Arial", 18))
+        self.label = ctk.CTkLabel(
+            self.center_frame, text="Módulo Asfalto", font=("Arial", 18))
         self.label.pack(pady=(30, 20))
 
-        self.btn_parametros = ctk.CTkButton(self.center_frame, text="Parâmetros Normativos", command=self.abrir_parametros, width=220)
+        self.btn_parametros = ctk.CTkButton(
+            self.center_frame, text="Parâmetros Normativos", command=self.abrir_parametros, width=220)
         self.btn_parametros.pack(pady=8, padx=30)
 
-        self.btn_parametros_projeto = ctk.CTkButton(self.center_frame, text="Parâmetros de Projeto", command=self.abrir_parametros_projeto, width=220)
+        self.btn_parametros_projeto = ctk.CTkButton(
+            self.center_frame, text="Parâmetros de Projeto", command=self.abrir_parametros_projeto, width=220)
         self.btn_parametros_projeto.pack(pady=8, padx=30)
 
-        self.btn_ensaio001 = ctk.CTkButton(self.center_frame, text="Marshall Completo", command=self.abrir_ensaio_001, width=220)
+        self.btn_ensaio001 = ctk.CTkButton(
+            self.center_frame, text="Marshall Completo", command=self.abrir_ensaio_001, width=220)
         self.btn_ensaio001.pack(pady=8, padx=30)
 
-        self.btn_voltar = ctk.CTkButton(self.center_frame, text="Voltar", command=self.voltar_menu, width=180)
+        self.btn_voltar = ctk.CTkButton(
+            self.center_frame, text="Voltar", command=self.voltar_menu, width=220)
         self.btn_voltar.pack(pady=18, padx=30)
 
         # Centralizar a janela principal ao abrir (caso seja uma janela Toplevel)
@@ -65,7 +72,8 @@ class AsfaltoUI:
                 workbook = None
                 try:
                     # Tentar reutilizar instância existente para evitar múltiplas janelas
-                    excel = win32com.client.GetActiveObject("Excel.Application")
+                    excel = win32com.client.GetActiveObject(
+                        "Excel.Application")
                 except Exception:
                     excel = None
 
@@ -110,7 +118,8 @@ class AsfaltoUI:
                 # Open workbook explicitly allowing edit and ignoring read-only recommended
                 if workbook is None:
                     try:
-                        workbook = excel.Workbooks.Open(os.path.abspath(caminho), ReadOnly=False, IgnoreReadOnlyRecommended=True)
+                        workbook = excel.Workbooks.Open(os.path.abspath(
+                            caminho), ReadOnly=False, IgnoreReadOnlyRecommended=True)
                     except Exception as open_err:
                         # If open fails, try to recover from Protected View windows
                         try:
@@ -137,7 +146,8 @@ class AsfaltoUI:
 
                             if not edited:
                                 # As a last resort, try opening with fewer flags
-                                workbook = excel.Workbooks.Open(os.path.abspath(caminho))
+                                workbook = excel.Workbooks.Open(
+                                    os.path.abspath(caminho))
                         except Exception:
                             raise open_err
 
@@ -146,14 +156,16 @@ class AsfaltoUI:
                     if getattr(workbook, 'ReadOnly', False):
                         # tentar reabrir em modo editável
                         workbook.Close(SaveChanges=False)
-                        workbook = excel.Workbooks.Open(os.path.abspath(caminho), ReadOnly=False, IgnoreReadOnlyRecommended=True)
+                        workbook = excel.Workbooks.Open(os.path.abspath(
+                            caminho), ReadOnly=False, IgnoreReadOnlyRecommended=True)
                 except Exception:
                     pass
 
                 # Desproteger workbook e worksheets de forma segura
                 # NÃO reproteger após abertura para evitar bloqueios futuros
                 try:
-                    self.desproteger_planilha_seguro(excel, workbook, reproteger=False)
+                    self.desproteger_planilha_seguro(
+                        excel, workbook, reproteger=False)
                 except Exception:
                     pass
 
@@ -226,7 +238,8 @@ class AsfaltoUI:
                 try:
                     os.startfile(os.path.abspath(caminho))
                 except Exception as fallback_error:
-                    self.mostrar_erro(f"Falha ao abrir planilha: {fallback_error}")
+                    self.mostrar_erro(
+                        f"Falha ao abrir planilha: {fallback_error}")
         else:
             self.mostrar_erro(f"Planilha não encontrada: {caminho}")
 
@@ -239,7 +252,7 @@ class AsfaltoUI:
             estado_original = {}
             for worksheet in workbook.Worksheets:
                 estado_original[worksheet.Name] = worksheet.ProtectContents
-            
+
             # **DESPROTEGE WORKBOOK**
             try:
                 if workbook.ProtectStructure:
@@ -247,7 +260,7 @@ class AsfaltoUI:
                     print("Workbook desprotegido")
             except Exception as e:
                 print(f"Aviso: Não foi possível desproteger workbook: {e}")
-            
+
             # **DESPROTEGE WORKSHEETS**
             for worksheet in workbook.Worksheets:
                 try:
@@ -255,8 +268,9 @@ class AsfaltoUI:
                         worksheet.Unprotect()  # Tenta sem senha
                         print(f"Worksheet {worksheet.Name} desprotegido")
                 except Exception as e:
-                    print(f"Aviso: Não foi possível desproteger {worksheet.Name}: {e}")
-            
+                    print(
+                        f"Aviso: Não foi possível desproteger {worksheet.Name}: {e}")
+
             # **APLICA PROTEÇÃO APENAS SE NECESSÁRIO (UserInterfaceOnly)**
             # Isso permite macros mesmo com proteção
             if reproteger:
@@ -264,16 +278,18 @@ class AsfaltoUI:
                     if estado_original.get(worksheet.Name, False):
                         try:
                             worksheet.Protect(
-                                Password="", 
-                                DrawingObjects=True, 
-                                Contents=True, 
+                                Password="",
+                                DrawingObjects=True,
+                                Contents=True,
                                 Scenarios=True,
                                 UserInterfaceOnly=True  # **PERMITE MACROS**
                             )
-                            print(f"Worksheet {worksheet.Name} reprotegido com UserInterfaceOnly")
+                            print(
+                                f"Worksheet {worksheet.Name} reprotegido com UserInterfaceOnly")
                         except Exception as e:
-                            print(f"Aviso: Não foi possível reproteger {worksheet.Name}: {e}")
-                        
+                            print(
+                                f"Aviso: Não foi possível reproteger {worksheet.Name}: {e}")
+
         except Exception as e:
             print(f"Erro no processo de desproteção: {e}")
 
@@ -283,7 +299,7 @@ class AsfaltoUI:
         for widget in self.center_frame.winfo_children():
             if isinstance(widget, ctk.CTkLabel) and widget.cget("text_color") == "red":
                 widget.destroy()
-        
+
         ctk.CTkLabel(
             self.center_frame,
             text=mensagem,
