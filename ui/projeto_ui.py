@@ -19,7 +19,7 @@ class ProjetoUI:
         self.window = ctk.CTkToplevel(master)
         self.window.title("Cadastro - Tbl_Projeto (Parâmetros de Projeto)")
         # definir tamanho e centralizar
-        width = 1100
+        width = 920
         height = 750
         self.window.geometry(f"{width}x{height}")
         self.window.update_idletasks()
@@ -101,7 +101,7 @@ class ProjetoUI:
 
         # Listbox de procedimentos (PROC) - usando tkinter.Listbox (CTk não tem Listbox)
         listbox_frame = ctk.CTkFrame(container_proc)
-        listbox_frame.pack(side="left", padx=6, pady=6)
+        listbox_frame.pack(fill="x", padx=6, pady=6)
 
         self.listbox_procedim = tk.Listbox(
             listbox_frame,
@@ -125,7 +125,7 @@ class ProjetoUI:
 
         # Frame das peneiras (lado direito)
         frame_peneiras = ctk.CTkFrame(container_proc, width=640, height=320)
-        frame_peneiras.pack(side="right", fill="both", expand=True, padx=6, pady=6)
+        frame_peneiras.pack(fill="both", expand=True, padx=6, pady=6)
         frame_peneiras.pack_propagate(False)
 
         # Carrega procedimentos na listbox
