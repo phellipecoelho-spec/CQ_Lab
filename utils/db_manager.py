@@ -230,6 +230,50 @@ def inserir_procedim(dados: Dict[str, Any]) -> int:
     conn.close()
     return new_id
 
+def atualizar_procedim(reg_id: int, dados: Dict[str, Any]) -> None:
+    """
+    Atualiza registro existente em Tbl_Procedim pelo REG_NORMA.
+    """
+    inicializar_db()
+    conn = conectar()
+    cur = conn.cursor()
+    set_clause = ", ".join([f"{k}=?" for k in dados.keys()])
+    values = list(dados.values())
+    values.append(reg_id)
+    sql = f"UPDATE Tbl_Procedim SET {set_clause} WHERE REG_NORMA = ?"
+    cur.execute(sql, values)
+    conn.commit()
+    conn.close()
+
+
+def excluir_procedim(reg_id: int) -> None:
+    """
+    Remove registro de Tbl_Procedim pelo REG_NORMA.
+    """
+    inicializar_db()
+    conn = conectar()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM Tbl_Procedim WHERE REG_NORMA = ?", (reg_id,))
+    conn.commit()
+    conn.close()
+
+
+def existe_procedim(dados: Dict[str, Any]) -> bool:
+    """
+    Verifica se já existe um registro com os mesmos valores das colunas especificadas (exclui REG_NORMA).
+    Retorna True se houver duplicata.
+    """
+    conn = conectar()
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+    conditions = " AND ".join([f"{k}=?" for k in dados.keys() if k != "REG_NORMA"])
+    values = [v for k, v in dados.items() if k != "REG_NORMA"]
+    sql = f"SELECT 1 FROM Tbl_Procedim WHERE {conditions} LIMIT 1"
+    cur.execute(sql, values)
+    exists = cur.fetchone() is not None
+    conn.close()
+    return exists
+
 def inserir_projeto(dados: Dict[str, Any]) -> int:
     """
     Insere um registro em Tbl_Projeto.
