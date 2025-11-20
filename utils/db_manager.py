@@ -86,6 +86,7 @@ def inicializar_db():
     # Tabela Tbl_Projeto (parâmetros de estudo/projeto)
     campos_proj = [
         "ID_PROJ INTEGER PRIMARY KEY AUTOINCREMENT",
+        "REG_NORMA INTEGER",
         "PROJ TEXT",
         "Teor_otimo REAL",
         "Fx_gran_trabalho TEXT",
@@ -121,6 +122,12 @@ def inicializar_db():
                     cur.execute(f"ALTER TABLE Tbl_Projeto ADD COLUMN {col} REAL")
                 except Exception:
                     pass
+        # adiciona REG_NORMA se ausente
+        if "REG_NORMA" not in existing_cols:
+            try:
+                cur.execute("ALTER TABLE Tbl_Projeto ADD COLUMN REG_NORMA INTEGER")
+            except Exception:
+                pass
     except Exception:
         pass
 
@@ -302,6 +309,72 @@ def inserir_projeto(dados: Dict[str, Any]) -> int:
     conn.close()
     return new_id
 
+# Verifica se já existe um projeto com os mesmos valores (exclui ID_PROJ)
+def existe_projeto(dados: Dict[str, Any]) -> bool:
+    """
+    Retorna True se já houver um registro em Tbl_Projeto com os mesmos valores das colunas informadas,
+    ignorando a coluna de chave primária ID_PROJ.
+    """
+    conn = conectar()
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+    # montar condições apenas para colunas fornecidas (excluindo ID_PROJ)
+    conditions = " AND ".join([f"{k}=?" for k in dados.keys() if k != "ID_PROJ"])
+    values = [v for k, v in dados.items() if k != "ID_PROJ"]
+    sql = f"SELECT 1 FROM Tbl_Projeto WHERE {conditions} LIMIT 1"
+    cur.execute(sql, values)
+    exists = cur.fetchone() is not None
+    conn.close()
+    return exists
+
+# Busca um projeto pelo ID_PROJ
+def get_projeto_por_id(reg_id: int) -> Optional[Dict[str, Any]]:
+    conn = conectar()
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM Tbl_Projeto WHERE ID_PROJ = ?", (reg_id,))
+    row = cur.fetchone()
+    conn.close()
+    if not row:
+        return None
+    return dict(row)
+
+# Atualiza um projeto existente
+def atualizar_projeto(reg_id: int, dados: Dict[str, Any]) -> None:
+    """
+    Atualiza o registro de Tbl_Projeto identificado por `reg_id` com os valores em `dados`.
+    """
+    inicializar_db()
+    conn = conectar()
+    cur = conn.cursor()
+    set_clause = ", ".join([f"{k}=?" for k in dados.keys()])
+    values = list(dados.values())
+    values.append(reg_id)
+    sql = f"UPDATE Tbl_Projeto SET {set_clause} WHERE ID_PROJ = ?"
+    cur.execute(sql, values)
+    conn.commit()
+    conn.close()
+
+# Remove um projeto pelo ID_PROJ
+def excluir_projeto(reg_id: int) -> None:
+    inicializar_db()
+    conn = conectar()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM Tbl_Projeto WHERE ID_PROJ = ?", (reg_id,))
+    conn.commit()
+    conn.close()
+
+# Busca procedimento técnico (PROC) na tabela Tbl_Procedim
+def get_procedim_por_proc(proc: str) -> Optional[Dict[str, Any]]:
+    conn = conectar()
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM Tbl_Procedim WHERE PROC = ?", (proc,))
+    row = cur.fetchone()
+    conn.close()
+    if not row:
+        return None
+    return dict(row)
 def get_ultimo_procedim() -> Optional[Dict[str, Any]]:
     conn = conectar()
     conn.row_factory = sqlite3.Row
