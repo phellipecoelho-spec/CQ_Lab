@@ -1,6 +1,6 @@
 # ui/procedim_ui.py
 import customtkinter as ctk
-from utils.db_manager import inserir_procedim
+from utils.db_manager import inserir_procedim, atualizar_procedim, excluir_procedim, existe_procedim, get_procedim_por_id, get_all_procedim
 from typing import Dict, Any
 
 class ProcedimUI:
@@ -103,8 +103,26 @@ class ProcedimUI:
         self.btn_limpar = ctk.CTkButton(btn_frame, text="Limpar", command=self.limpar)
         self.btn_limpar.grid(row=0, column=1, padx=6)
 
+        self.btn_editar = ctk.CTkButton(btn_frame, text="Editar", command=self.editar)
+        self.btn_editar.grid(row=0, column=2, padx=6)
+
+        self.btn_excluir = ctk.CTkButton(btn_frame, text="Excluir", command=self.excluir)
+        self.btn_excluir.grid(row=0, column=3, padx=6)
+
+        self.btn_anterior = ctk.CTkButton(btn_frame, text="←", command=self.anterior)
+        self.btn_anterior.grid(row=0, column=4, padx=6)
+
+        self.btn_proximo = ctk.CTkButton(btn_frame, text="→", command=self.proximo)
+        self.btn_proximo.grid(row=0, column=5, padx=6)
+
         self.label_status = ctk.CTkLabel(self.scroll, text="")
         self.label_status.pack(pady=6)
+
+        # gerenciamento interno de navegação/edição
+        self._ids = []
+        self._pos = -1
+        self._editando_id = None
+        self._carregar_ids()
 
     def _add_label_entry(self, col_name: str, label_text: str, parent=None):
         if parent is None:
@@ -132,22 +150,38 @@ class ProcedimUI:
             if val == "":
                 dados[col] = None
             else:
-                # PROC é texto
                 if col == "PROC":
                     dados[col] = val
                 else:
-                    # tentar converter para float
                     try:
                         dados[col] = float(val.replace(",", "."))
                     except Exception:
-                        # se não converte, salvar como texto (defensivo)
                         dados[col] = val
 
+        # Verificar duplicidade quando não estiver em modo edição
+        if self._editando_id is None and existe_procedim(dados):
+            self.label_status.configure(
+                text="Registro duplicado – não foi inserido.",
+                text_color="orange",
+            )
+            return
+
         try:
-            new_id = inserir_procedim(dados)
-            self.label_status.configure(text=f"Registro salvo com REG_NORMA = {new_id}", text_color="green")
-            # opcional: limpar formulário após inserir
-            # self.limpar()
+            if self._editando_id is not None:
+                # Atualizar registro existente
+                atualizar_procedim(self._editando_id, dados)
+                self.label_status.configure(
+                    text=f"Registro {self._editando_id} atualizado.", text_color="green"
+                )
+                self._editando_id = None
+            else:
+                # Inserir novo registro
+                new_id = inserir_procedim(dados)
+                self.label_status.configure(
+                    text=f"Registro salvo com REG_NORMA = {new_id}", text_color="green"
+                )
+            # Recarregar lista de IDs e posicionamento
+            self._carregar_ids()
         except Exception as e:
             self.label_status.configure(text=f"Erro ao salvar: {e}", text_color="red")
 
@@ -155,3 +189,69 @@ class ProcedimUI:
         for widget in self.entries.values():
             widget.delete(0, "end")
         self.label_status.configure(text="")
+
+        # Resetar navegação/edição
+        self._pos = -1
+        self._editando_id = None
+
+    def editar(self):
+        """Carrega o registro atual para edição."""
+        if not self._ids or self._pos == -1:
+            self.label_status.configure(text="Nenhum registro para editar.", text_color="red")
+            return
+        reg_id = self._ids[self._pos]
+        registro = get_procedim_por_id(reg_id)
+        if not registro:
+            self.label_status.configure(text="Registro não encontrado.", text_color="red")
+            return
+        for col, widget in self.entries.items():
+            val = registro.get(col)
+            widget.delete(0, "end")
+            if val is not None:
+                widget.insert(0, str(val))
+        self._editando_id = reg_id
+        self.label_status.configure(text=f"Edição do registro {reg_id}", text_color="blue")
+
+    def excluir(self):
+        """Remove o registro atual."""
+        if not self._ids or self._pos == -1:
+            self.label_status.configure(text="Nenhum registro para excluir.", text_color="red")
+            return
+        reg_id = self._ids[self._pos]
+        excluir_procedim(reg_id)
+        self.label_status.configure(text=f"Registro {reg_id} excluído.", text_color="green")
+        self._carregar_ids()
+
+    def anterior(self):
+        """Navega para o registro anterior."""
+        if self._pos > 0:
+            self._pos -= 1
+            self._carregar_registro(self._ids[self._pos])
+
+    def proximo(self):
+        """Navega para o próximo registro."""
+        if self._pos + 1 < len(self._ids):
+            self._pos += 1
+            self._carregar_registro(self._ids[self._pos])
+
+    def _carregar_ids(self):
+        """Carrega a lista de IDs existentes."""
+        registros = get_all_procedim()
+        self._ids = [r["REG_NORMA"] for r in registros]
+        if self._ids:
+            self._pos = 0
+            self._carregar_registro(self._ids[0])
+        else:
+            self._pos = -1
+
+    def _carregar_registro(self, reg_id: int):
+        """Preenche as entrys com os dados do registro especificado."""
+        registro = get_procedim_por_id(reg_id)
+        if not registro:
+            return
+        for col, widget in self.entries.items():
+            widget.delete(0, "end")
+            val = registro.get(col)
+            if val is not None:
+                widget.insert(0, str(val))
+        self.label_status.configure(text=f"Registro {reg_id} carregado.", text_color="green")
