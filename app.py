@@ -1,7 +1,10 @@
 import customtkinter as ctk
 from ui.login_ui import LoginUI
+from utils.db_manager import inicializar_db
+
 
 def main():
+    inicializar_db()
     ctk.set_appearance_mode("dark")
     ctk.set_default_color_theme("blue")
 
@@ -20,6 +23,7 @@ def main():
     LoginUI(app)  # inicia pela tela de login
 
     app.mainloop()
+
 
 if __name__ == "__main__":
     main()

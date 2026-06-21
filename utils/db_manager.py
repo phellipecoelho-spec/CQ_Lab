@@ -7,6 +7,7 @@ from typing import Dict, Any, List, Optional
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DB_PATH = os.path.join(PROJECT_ROOT, "database.db")
 
+
 def conectar():
     # Garantir que o diretório do DB exista
     db_dir = os.path.dirname(DB_PATH)
@@ -25,6 +26,7 @@ def conectar():
             pass
 
     return sqlite3.connect(DB_PATH)
+
 
 def inicializar_db():
     conn = conectar()
@@ -118,7 +120,8 @@ def inicializar_db():
         for col in needed:
             if col not in existing_cols:
                 try:
-                    cur.execute(f"ALTER TABLE Tbl_Projeto ADD COLUMN {col} REAL")
+                    cur.execute(
+                        f"ALTER TABLE Tbl_Projeto ADD COLUMN {col} REAL")
                 except Exception:
                     pass
     except Exception:
@@ -140,7 +143,15 @@ def inicializar_db():
     conn.commit()
     conn.close()
 
-#Função que cria a tabela do Ensaio_001
+    # Garantir que a tabela de ensaio específico exista para salvar registros
+    try:
+        criar_tabela_ensaio_001()
+    except Exception:
+        pass
+
+# Função que cria a tabela do Ensaio_001
+
+
 def criar_tabela_ensaio_001(table_name: str = "Tbl_Ensaio_001"):
     """Cria a tabela para o Ensaio 001. `table_name` pode ser alterado para criar tabelas com nomes diferentes."""
     with conectar() as conn:
@@ -198,6 +209,7 @@ def criar_tabela_ensaio_001(table_name: str = "Tbl_Ensaio_001"):
 
 # --- Funções de CRUD --- #
 
+
 def inserir_procedim(dados: Dict[str, Any]) -> int:
     """
     Insere um registro em Tbl_Procedim.
@@ -230,6 +242,7 @@ def inserir_procedim(dados: Dict[str, Any]) -> int:
     conn.close()
     return new_id
 
+
 def inserir_projeto(dados: Dict[str, Any]) -> int:
     """
     Insere um registro em Tbl_Projeto.
@@ -258,6 +271,7 @@ def inserir_projeto(dados: Dict[str, Any]) -> int:
     conn.close()
     return new_id
 
+
 def get_ultimo_procedim() -> Optional[Dict[str, Any]]:
     conn = conectar()
     conn.row_factory = sqlite3.Row
@@ -268,6 +282,7 @@ def get_ultimo_procedim() -> Optional[Dict[str, Any]]:
     if not row:
         return None
     return dict(row)
+
 
 def get_procedim_por_id(reg_id: int) -> Optional[Dict[str, Any]]:
     conn = conectar()
@@ -280,6 +295,7 @@ def get_procedim_por_id(reg_id: int) -> Optional[Dict[str, Any]]:
         return None
     return dict(row)
 
+
 def get_all_procedim() -> List[Dict[str, Any]]:
     conn = conectar()
     conn.row_factory = sqlite3.Row
@@ -289,6 +305,7 @@ def get_all_procedim() -> List[Dict[str, Any]]:
     conn.close()
     return [dict(r) for r in rows]
 
+
 def get_all_projetos() -> List[Dict[str, Any]]:
     conn = conectar()
     conn.row_factory = sqlite3.Row
@@ -297,6 +314,7 @@ def get_all_projetos() -> List[Dict[str, Any]]:
     rows = cur.fetchall()
     conn.close()
     return [dict(r) for r in rows]
+
 
 # Execução direta para criar DB ao importar rodando como script
 if __name__ == "__main__":

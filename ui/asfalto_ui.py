@@ -3,6 +3,7 @@ import customtkinter as ctk
 from ui.procedim_ui import ProcedimUI
 from ui.projeto_ui import ProjetoUI
 from utils.path_helper import get_planilha_path
+from ensaios.ensaio_001.sync_ensaio_001 import sincronizar_tabelas_normativas
 import os
 
 
@@ -33,9 +34,17 @@ class AsfaltoUI:
             self.center_frame, text="Parâmetros de Projeto", command=self.abrir_parametros_projeto, width=220)
         self.btn_parametros_projeto.pack(pady=8, padx=30)
 
+        self.btn_sincronizar = ctk.CTkButton(
+            self.center_frame, text="Sincronizar Proc/Proj", command=self.sincronizar_normativas, width=220)
+        self.btn_sincronizar.pack(pady=8, padx=30)
+
         self.btn_ensaio001 = ctk.CTkButton(
             self.center_frame, text="Marshall Completo", command=self.abrir_ensaio_001, width=220)
         self.btn_ensaio001.pack(pady=8, padx=30)
+
+        self.label_status = ctk.CTkLabel(
+            self.center_frame, text="", font=("Arial", 12))
+        self.label_status.pack(pady=(4, 10))
 
         self.btn_voltar = ctk.CTkButton(
             self.center_frame, text="Voltar", command=self.voltar_menu, width=220)
@@ -242,6 +251,15 @@ class AsfaltoUI:
                         f"Falha ao abrir planilha: {fallback_error}")
         else:
             self.mostrar_erro(f"Planilha não encontrada: {caminho}")
+
+    def sincronizar_normativas(self):
+        try:
+            sincronizar_tabelas_normativas()
+            self.label_status.configure(
+                text="Sincronização concluída.", text_color="green")
+        except Exception as e:
+            self.label_status.configure(
+                text=f"Erro ao sincronizar: {e}", text_color="red")
 
     def desproteger_planilha_seguro(self, excel_app, workbook, reproteger: bool = True):
         """
